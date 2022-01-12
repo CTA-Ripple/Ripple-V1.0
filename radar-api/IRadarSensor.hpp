@@ -64,7 +64,7 @@ enum RadarState {
   RSTATE_OFF
 };
 
-// Defineis how an internal fifo buffer should behave in case of overflow.
+// Defines how an internal fifo buffer should behave in case of overflow.
 enum FifoMode {
   // A default undefined value that should be used at initialization.
   RFIFO_UNDEFINED = 0,
