@@ -64,7 +64,7 @@ enum RadarState {
   RSTATE_OFF
 };
 
-// Defineis how an internal fifo buffer should behave in case of overflow.
+// Defines how an internal fifo buffer should behave in case of overflow.
 enum FifoMode {
   // A default undefined value that should be used at initialization.
   RFIFO_UNDEFINED = 0,
@@ -252,14 +252,14 @@ class IRadarSensor {
    * @brief Add a new observer object that will get notified about
    * the Radar sensor activity.
    *
-   * @param observer pointer to the implmenetation of the interface to add.
+   * @param observer pointer to the implementation of the interface to add.
    */
   virtual ReturnCode AddObserver(IRadarSensorObserver* observer) = 0;
 
   /*
    * @brief Remove the previously registered observer from subscribers list.
    *
-   * @param observer pointer to the implmenetation of the interface to remove.
+   * @param observer pointer to the implementation of the interface to remove.
    */
   virtual ReturnCode RemoveObserver(IRadarSensorObserver* observer) = 0;
 
@@ -448,7 +448,7 @@ class IRadarSensor {
 
   /*
    * @brief Set country code. If local regulations do not allow current sensor
-   *        to operate, it should be turned off or faile to turn on.
+   *        to operate, it should be turned off or fail to turn on.
    *
    * @param country_code a ISO 3166-1 alpha-2 country code.
    */
@@ -493,7 +493,7 @@ class IRadarSensor {
   virtual ReturnCode SetRegister(uint32_t address, uint32_t value) = 0;
 };
 
-// Return the intsance of the RadarSensor implementation.
+// Return the instance of the RadarSensor implementation.
 IRadarSensor* GetRadarSensorImpl(void);
 
 } // namespace radar_api
