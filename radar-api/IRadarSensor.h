@@ -17,6 +17,8 @@
 #ifndef I_RADAR_SENSOR_H_
 #define I_RADAR_SENSOR_H_
 
+#include "RadarCommon.h"
+
 #include <inttypes.h>
 #include <stdbool.h>
 #include <time.h>
@@ -26,188 +28,11 @@ extern "C" {
 #endif
 
 //--------------------------------------
-//----- Enums --------------------------
-//--------------------------------------
-
-// A list of possible status/return codes that API can report back.
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  RC_UNDEFINED = 0,
-  // Operation completed successfully.
-  RC_OK,
-  // Operation failed and no more information can be provided.
-  RC_ERROR,
-  // Input parameters are invalid or out of supported range.
-  RC_BAD_INPUT,
-  // Operation timed out.
-  RC_TIMEOUT,
-  // Operation cannot be performed at the current state.
-  RC_BAD_STATE,
-  // Operation failed due to limited resources (memory, timers, mutexes, etc).
-  RC_RES_LIMIT,
-  // Operation is not supported.
-  RC_UNSUPPORTED,
-  // An internal system error that should never happen.
-  RC_OOPS
-} RadarReturnCode;
-
-// A list of possible power mode states for radar sensors.
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  RSTATE_UNDEFINED = 0,
-  // Active state when radar is emitting/collecting data started.
-  RSTATE_ACTIVE,
-  // Idle state when the radar is neither ACTIVE nor SLEEP nor OFF.
-  RSTATE_IDLE,
-  // Sleep state when configuration persists but power consumption reduced.
-  RSTATE_SLEEP,
-  // When radar is currently turned off and configuration is reset.
-  RSTATE_OFF
-} RadarState;
-
-// Defineis how an internal fifo buffer should behave in case of overflow.
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  RFIFO_UNDEFINED = 0,
-  // A new burst will be ignored.
-  RFIFO_DROP_NEW,
-  // The oldest burst(s) will be dropped to release space for a new burst.
-  RFIFO_DROP_OLD
-} RadarFifoMode;
-
-//--------------------------------------
-//----- Params -------------------------
-//--------------------------------------
-
-// A list of radar sensor parameters that define main characteristics.
-// A configuration slot can hold only 1 value for each MainParam.
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  RADAR_PARAM_UNDEFINED = 0,
-  // Power mode for after the burst period.
-  RADAR_PARAM_AFTERBURST_POWER_MODE,
-  // Power mode for the period between chirps.
-  RADAR_PARAM_INTERCHIRP_POWER_MODE,
-  // Duration between the start times of two consecutive bursts.
-  RADAR_PARAM_BURST_PERIOD_US,
-  // Duration between the start times of two consecutive chirps.
-  RADAR_PARAM_CHIRP_PERIOD_US,
-  // Amount of chirps within the burst.
-  RADAR_PARAM_CHIRPS_PER_BURST,
-  // The number of ADC sample values captured for each chirp.
-  RADAR_PARAM_SAMPLES_PER_CHIRP,
-  // The lower frequency at what TX antenna starts emitting the signal.
-  RADAR_PARAM_LOWER_FREQ_MHZ,
-  // The upper frequency at what TX antenna stops emitting the signal.
-  RADAR_PARAM_UPPER_FREQ_MHZ,
-  // Bit mask for enabled TX antennas.
-  RADAR_PARAM_TX_ANTENNA_MASK,
-  // Bit mask for enabled RX antennas.
-  RADAR_PARAM_RX_ANTENNA_MASK,
-  // Power for TX antennas.
-  RADAR_PARAM_TX_POWER,
-  // ADC sampling frequency.
-  RADAR_PARAM_ADC_SAMPLING_HZ
-} RadarMainParam;
-
-// A channel specific list of parameters.
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  CHANNEL_PARAM_UNDEFINED = 0,
-  // Variable Gain Amplifiers (VGA) in dB.
-  CHANNEL_PARAM_VGA_DB,
-  // High Phase (HP) filter gain in dB.
-  CHANNEL_PARAM_HP_GAIN_DB,
-  // High Phase (HP) cut off frequency in kHz.
-  CHANNEL_PARAM_HP_CUTOFF_KHZ
-} RadarChannelParam;
-
-typedef enum {
-  // A default undefined value that should be used at initialization.
-  RLOG_UNDEFINED = 0,
-  // None of log messages are requested.
-  RLOG_OFF,
-  // Provide only log messages about occurred errors.
-  RLOG_ERR,
-  // Provide log messages same as for RLOG_ERR and warnings.
-  RLOG_WRN,
-  // Provide log messages same as for RLOG_WRN and informative changes.
-  RLOG_INF,
-  // Provide log messages same as for RLOG_INF and debugging info details.
-  RLOG_DBG
-} RadarLogLevel;
-
-//--------------------------------------
 //----- Data types ---------------------
 //--------------------------------------
 
 // Forward declaration for a custom radar driver implementation.
 typedef struct RadarHandleImpl RadarHandle;
-
-// Forward declaration for a list of vensor specific parameters.
-typedef enum RadarVendorParamImpl RadarVendorParam;
-
-// Describes a data format of burst data.
-typedef struct RadarBurstFormat_s {
-  // Sequence number for the current burst.
-  uint32_t sequence_number;
-  // Maximum value ADC sampler produces.
-  uint32_t max_sample_value;
-  // Amount of bits per single sample.
-  uint8_t bits_per_sample;
-  // Amount of samples per single chirp.
-  uint16_t samples_per_chirp;
-  // Amount of active channels in the current burst.
-  uint8_t channels_count;
-  // Amount of chirps in the current burst.
-  uint8_t chirps_per_burst;
-  // Config slot ID used to generate the current burst.
-  uint8_t config_id;
-  union {
-    struct {
-      // True/1 if channels and samples are interleaved.
-      uint16_t is_channels_interlieved: 1;
-      // True/1 if a word is in big endian.
-      uint16_t is_big_endian: 1;
-      // Reserved for future use.
-      uint16_t reserved: 14;
-    };
-    uint16_t flags;
-  };
-  // CRC for the current burst data buffer.
-  uint32_t burst_data_crc;
-  // Timestamp when the burst was created since radar was turned on.
-  uint32_t timestamp_ms;
-} RadarBurstFormat;
-
-// A semantic version holder.
-typedef struct Version_s {
-  uint8_t major;
-  uint8_t minor;
-  uint8_t patch;
-  uint8_t build;
-} Version;
-
-#define MAX_SENSOR_NAME_LEN 32
-#define MAX_VENDOR_NAME_LEN 32
-
-// The general information about the radar sensor hardware and software.
-typedef struct SensorInfo_s {
-  // Name of the radar sensor.
-  const char name[MAX_SENSOR_NAME_LEN];
-  // Vendor name.
-  const char vendor[MAX_VENDOR_NAME_LEN];
-  // ID that identifies this sensor.
-  uint32_t device_id;
-  // The radar driver version.
-  Version driver_version;
-  // The Radar API version that the current driver supports.
-  Version api_version;
-  // Maximum ADC sampling rate in hertz.
-  uint64_t max_sampling_rate_hz;
-  // Current sensor state
-  RadarState state;
-} SensorInfo;
 
 /*
  * @brief A callback function declaration that will be invoked
